@@ -1,0 +1,210 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+char notated_double_str[20];
+char result[40];
+
+int TO_DIGIT(char symb) {
+	int digit;
+	if (symb <= '9') {
+		digit = symb - '0';
+	}
+	else
+		if (symb >= 'A' && symb <= 'Z') {
+			digit = symb + 10 - 'A';
+		}
+		else
+			if (symb >= 'a' && symb <= 'z') {
+				digit = symb + 10 - 'a';
+			}
+	return digit;
+}
+
+char TO_SYMBOL(int digit_to_symb) {
+	char symb;
+	if (digit_to_symb <= 9) {
+		symb = digit_to_symb + '0';
+	}
+	else {
+		symb = digit_to_symb - 10 + 'a';
+	}
+	return symb;
+}
+
+double TO_DEC(int digi, int intpower, int b1sys) {
+	double powered = 0;
+	powered = digi*(pow(b1sys, intpower));
+	return powered;
+}
+
+void TO_NOTATION_INT(long long int dec_int, int notation) {
+	char notated_int_str[60], reversed_notated_int_str[60];
+	int remaind, i, total;
+	if (dec_int > 0) {
+		for (i = 0; dec_int > 0; i++) {
+			remaind = dec_int % notation;
+			notated_int_str[i] = TO_SYMBOL(remaind);
+			notated_int_str[i + 1] = '\0';
+			dec_int = dec_int / notation;
+		}
+		total = strlen(notated_int_str);
+		for (int k = total - 1, j = 0; k >= 0; k--) {
+			reversed_notated_int_str[j] = notated_int_str[k];
+			j++;
+		}
+		reversed_notated_int_str[total] = '\0';
+		strcpy(result, reversed_notated_int_str);
+	}
+	else {
+		sprintf(result, "%lld", dec_int);
+	}
+}
+
+void TO_NOTATION_DOUBLE(double dec_double, int notation) {
+	char str_dec_part[5];
+	int length = 0, x = 0, str_dec_part_to_num = 0;
+	unsigned int l = 0;
+	sprintf(notated_double_str, "%.13f", dec_double);
+	for (unsigned int i = strlen(notated_double_str) - 1; i >= 2; i--) {
+		if (notated_double_str[i] != '0') {
+			break;
+		}
+		else {
+			notated_double_str[i] = '\0';
+		}
+	}
+	dec_double = strtod(notated_double_str, NULL);
+	while ((dec_double != 0) && (l < 12)) {
+		dec_double *= notation;
+		if (dec_double >= 1.0) {
+			sprintf(str_dec_part, "%d", int(dec_double));
+			if (notation > 10) {
+				for (unsigned int i = 0; i < strlen(str_dec_part); i--) {
+					str_dec_part_to_num = atoi(str_dec_part);
+					str_dec_part[i] = TO_SYMBOL(str_dec_part_to_num);
+					str_dec_part[i + 1] = '\0';
+				}
+			}
+			length = l;
+			for (l; l < (strlen(str_dec_part) + length); l++) {
+				if (l == 12) {
+					break;
+				}
+				notated_double_str[l] = str_dec_part[0 + x];
+				notated_double_str[l + 1] = '\0';
+				x++;
+			}
+			dec_double = dec_double - int(dec_double);
+			x = 0;
+		}
+		else {
+			sprintf(str_dec_part, "%d", int(dec_double));
+			notated_double_str[l] = str_dec_part[0];
+			notated_double_str[l + 1] = '\0';
+			l++;
+		}
+	}
+}
+
+void BAD_INPUT() {
+	printf("bad input\n");
+	exit(0);
+}
+
+int main() {
+	char b1instr[6], b2instr[6], valinstr[14], dec_val_str[60], dec_val_str_double[50];
+	int b1, b2, dig = 0, power = 0, dot = 0, dot_dec = 0, num_of_dots = 0, symb_after_dot_dec = 0;
+	long long int val_dec_int = 0;
+	double val_dec_double = 0.;
+	scanf("%s%s%s", b1instr, b2instr, valinstr);
+	b1 = atoi(b1instr);
+	b2 = atoi(b2instr);
+	if (((b1 < 2) || (b1 > 16)) || ((b2 < 2) || (b2 > 16))) {
+		BAD_INPUT();
+	}
+	else {
+		if ((valinstr[strlen(valinstr) - 1] == '.') || (valinstr[0] == '.')) {
+			BAD_INPUT();
+		}
+		for (unsigned int i = 0; i < strlen(valinstr); i++) {
+			if (TO_DIGIT(valinstr[i]) >= b1) {
+				BAD_INPUT();
+			}
+			else {
+				if (valinstr[i] == '.') {
+					dot = i;
+					num_of_dots++;
+				}
+			}
+		}
+		if (num_of_dots > 1) {
+			BAD_INPUT();
+		}
+		if (dot > 0) {
+			power = dot - 1;
+			for (unsigned int i = 0; i < strlen(valinstr); i++) {
+				if ((i == dot) && (i > 0)) {
+					continue;
+				}
+				else {
+					dig = TO_DIGIT(valinstr[i]);
+					val_dec_double += TO_DEC(dig, power, b1);
+					power--;
+				}
+			}
+			sprintf(dec_val_str, "%.13f", val_dec_double);
+			for (unsigned int i = 0; i < strlen(dec_val_str); i++) {
+				if (dec_val_str[i] == '.') {
+					dot_dec = i;
+				}
+				if (dot_dec > 0) {
+					symb_after_dot_dec++;
+				}
+			}
+			symb_after_dot_dec--;
+			if (symb_after_dot_dec > 12) {
+				dec_val_str[dot_dec + symb_after_dot_dec] = '\0';
+			}
+			for (int i = strlen(dec_val_str) - 1; i >= dot_dec; i--) {
+				if (dec_val_str[i] != '0') {
+					if (dec_val_str[i] == '.') {
+						dec_val_str[i] = '\0';
+						dot_dec = 0;
+					}
+					break;
+				}
+				else {
+					dec_val_str[i] = '\0';
+				}
+			}
+			if (dot_dec > 0) {
+				val_dec_double = strtod(dec_val_str, NULL);
+				val_dec_double = val_dec_double - int(val_dec_double);
+				sprintf(dec_val_str_double, "%.12f", val_dec_double);
+				dec_val_str[dot_dec] = '\0';
+				TO_NOTATION_DOUBLE(val_dec_double, b2);
+				val_dec_int = atoi(dec_val_str);
+				TO_NOTATION_INT(val_dec_int, b2);
+				strcat(result, ".");
+				strcat(result, notated_double_str);
+			}
+			else {
+				val_dec_int = long long int(val_dec_double);
+				TO_NOTATION_INT(val_dec_int, b2);
+			}
+		}
+		else {
+			power = strlen(valinstr) - 1;
+			for (unsigned int i = 0; i < strlen(valinstr); i++) {
+				dig = TO_DIGIT(valinstr[i]);
+				val_dec_int += long long int(TO_DEC(dig, power, b1));
+				power--;
+			}
+			TO_NOTATION_INT(val_dec_int, b2);
+		}
+		printf("%s\n", result);
+	}
+	return 0;
+}
